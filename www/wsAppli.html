@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RPI C Server Sensor App </title>
+</head>
+<body>
+<!--=================================================================-->
+<!--				DISPLAYS										 
+<!--=================================================================-->
+<script>
+	display_log=function(msg)
+	{
+		  var logArea = 0;		
+		  if(!logArea)
+		  { logArea=document.getElementById("log"); }
+		  if(msg==null)
+		  { logArea.textContent='';}
+		  else { logArea.textContent+=msg+'\n'; }
+	};
+</script> 
+<!--=================================================================-->
+<!--				WEBSOCKET							 
+<!--=================================================================-->
+<script type="text/javascript" charset="utf-8">
+	
+	hton_i32Array=function(values){
+	  var view=new DataView(values.buffer);
+	  for(var i=0; i<values.length; ++i)
+	  {
+		view.setInt32(i*4, values[i], false);
+	  }
+	};
+	<!----------------------------------------------------------------->
+	ntoh_i32Array=function(values){
+	  var view=new DataView(values.buffer);
+	  for(var i=0; i<values.length; ++i)
+	  {
+		values[i]=view.getInt32(i*4, false);
+	  }
+	};
+	<!----------------------------------------------------------------->
+	var host=window.location.hostname;
+	var port=window.location.port;
+
+	var ws = new WebSocket('ws://'+host+':'+port+'/');
+	ws.binaryType='arraybuffer';
+	<!----------------------------------------------------------------->					  
+	ws.onopen=function(){
+			display_log('CONNECT');
+		};
+	<!----------------------------------------------------------------->	
+	ws.onclose=function(){
+		display_log('DISCONNECT');				
+	};
+	<!----------------------------------------------------------------->
+	ws.onmessage=function(evt){
+		var values=new Int32Array(evt.data);
+		ntoh_i32Array(values);
+		var msg='received values :';
+		for(var i=0; i<values.length; ++i)
+		{
+			  msg+=' '+values[i]/1000.0;
+		}
+		display_log(msg);			
+	};	
+	<!----------------------------------------------------------------->
+    function start() {
+      console.log('start...');
+      nbr_meas = document.getElementById("nbr_meas");
+      var params=new Int32Array(3);
+	  params[0]=1000; 			// delayMs
+	  params[1]=100;  			// modulo
+	  params[2]=nbr_meas.value; // only this parameter is used
+	  hton_i32Array(params);
+	  ws.send(params);      
+    }    
+
+</script>
+<!--=================================================================-->
+<!--				ONLOAD WINDOW INIT					 						 
+<!--=================================================================--> 
+<script>	
+	window.onload = function() {
+			if(!host){
+				host='localhost';
+				port=8080;
+			  }	  
+	};
+</script>
+
+<!--=================================================================-->
+<!--				HTML											 -->
+<!--=================================================================-->
+
+<p>[<a href="/">home</a>]</p>
+
+<hr> <!---------------------------------------------------------------->
+
+<h2>Getting Sensor Datas with Websocket</h2>  
+
+			<strong> Number of Measurements :  </strong><br/>   
+			<input type="text" id="nbr_meas"/>     <br/>   
+			<button onclick="start()">Start</button>
+
+
+<p><b>Log:</b></p>
+<p></p><pre id="log"></pre><p></p>	
+
+<hr> <!---------------------------------------------------------------->
+
+
+  
+</body>
+</html>
+<!--=================================================================-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
